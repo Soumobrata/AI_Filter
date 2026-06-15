@@ -1,27 +1,119 @@
 /*
- * Copyright (c) 2024 Your Name
+ * Copyright (c) 2024 Soumobrata Ghosh
  * SPDX-License-Identifier: Apache-2.0
  */
 
 `default_nettype none
+`timescale 1ns / 1ps
 
 module tt_um_sfg_ai_filter (
-    input  wire [7:0] ui_in,    // Dedicated inputs
-    output wire [7:0] uo_out,   // Dedicated outputs
-    input  wire [7:0] uio_in,   // IOs: Input path
-    output wire [7:0] uio_out,  // IOs: Output path
-    output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    input  wire       ena,      // always 1 when the design is powered, so you can ignore it
-    input  wire       clk,      // clock
-    input  wire       rst_n     // reset_n - low to reset
+    input  wire [7:0] ui_in,
+    output wire [7:0] uo_out,
+    input  wire [7:0] uio_in,
+    output wire [7:0] uio_out,
+    output wire [7:0] uio_oe,
+    input  wire       ena,
+    input  wire       clk,
+    input  wire       rst_n
 );
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+  wire in_valid = ui_in[0];
+  wire in_last  = ui_in[1];
 
-  // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+  wire signed [15:0] in_q15;
+  assign in_q15 = {ui_in[7:2], uio_in[7:0], 2'b00};
+
+  wire clean_valid;
+  wire signed [15:0] clean_q15;
+  wire clean_bit;
+
+  wire class_valid;
+  wire [1:0] class_idx;
+
+  wire rtl_EMA_valid;
+  wire signed [15:0] rtl_EMA_clean_q15;
+
+  wire rtl_FC1_valid;
+  wire rtl_FC1_last;
+  wire signed [15:0] rtl_FC1_neuron_q15;
+
+  wire rtl_ReLU_valid;
+  wire signed [15:0] rtl_ReLU_neuron_q15;
+
+  wire rtl_FC2_valid;
+  wire rtl_FC2_last;
+  wire signed [15:0] rtl_FC2_logit_q15;
+
+  wire rtl_Argmax_valid;
+  wire [1:0] rtl_Argmax_idx;
+
+  ai_filter #(
+    .N_IN(100),
+    .N_HID(32),
+    .N_OUT(3),
+    .GAIN_SHIFT(4),
+    .USE_EMA(1)
+  ) u_ai_filter (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .in_valid(in_valid),
+    .in_q15(in_q15),
+    .in_last(in_last),
+
+    .clean_valid(clean_valid),
+    .clean_q15(clean_q15),
+    .clean_bit(clean_bit),
+
+    .class_valid(class_valid),
+    .class_idx(class_idx),
+
+    .rtl_EMA_valid(rtl_EMA_valid),
+    .rtl_EMA_clean_q15(rtl_EMA_clean_q15),
+
+    .rtl_FC1_valid(rtl_FC1_valid),
+    .rtl_FC1_last(rtl_FC1_last),
+    .rtl_FC1_neuron_q15(rtl_FC1_neuron_q15),
+
+    .rtl_ReLU_valid(rtl_ReLU_valid),
+    .rtl_ReLU_neuron_q15(rtl_ReLU_neuron_q15),
+
+    .rtl_FC2_valid(rtl_FC2_valid),
+    .rtl_FC2_last(rtl_FC2_last),
+    .rtl_FC2_logit_q15(rtl_FC2_logit_q15),
+
+    .rtl_Argmax_valid(rtl_Argmax_valid),
+    .rtl_Argmax_idx(rtl_Argmax_idx)
+  );
+
+  assign uo_out[0]   = clean_bit;
+  assign uo_out[1]   = clean_valid;
+  assign uo_out[3:2] = class_idx;
+  assign uo_out[4]   = class_valid;
+  assign uo_out[5]   = rtl_FC1_valid;
+  assign uo_out[6]   = rtl_FC2_valid;
+  assign uo_out[7]   = rtl_Argmax_valid;
+
+  assign uio_out = clean_q15[15:8];
+
+  assign uio_oe = 8'hFF;
+
+  wire _unused;
+  assign _unused = &{
+    ena,
+    in_last,
+    rtl_EMA_valid,
+    rtl_EMA_clean_q15,
+    rtl_FC1_last,
+    rtl_FC1_neuron_q15,
+    rtl_ReLU_valid,
+    rtl_ReLU_neuron_q15,
+    rtl_FC2_last,
+    rtl_FC2_logit_q15,
+    rtl_Argmax_idx,
+    1'b0
+  };
 
 endmodule
+
+`default_nettype wire
