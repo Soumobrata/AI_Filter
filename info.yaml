@@ -1,25 +1,20 @@
-```yaml
 # Tiny Tapeout project information
 project:
-  title:        "AI Neural Signal Filter"
-  author:       "Soumobrata Ghosh"
-  discord:      ""
-  description:  "Sequential fixed-point neural network for signal filtering and 3-class classification"
-  language:     "Verilog"
-  clock_hz:     25000000
+  title: "AI Neural Signal Filter"
+  author: "Soumobrata Ghosh"
+  discord: ""
+  description: "Sequential fixed-point neural network for signal filtering and 3-class classification"
+  language: "Verilog"
+  clock_hz: 25000000
 
-  # Start with a single tile. Increase if the build reports area overflow.
   tiles: "1x1"
 
-  # Top module name (must match project.v)
-  top_module:  "tt_um_sfg_ai_filter"
+  top_module: "tt_um_sfg_ai_filter"
 
-  # Source files (located in ./src)
   source_files:
     - "project.v"
     - "ai_filter.v"
 
-# Pin descriptions
 pinout:
   # Inputs
   ui[0]: "in_valid"
@@ -51,7 +46,4 @@ pinout:
   uio[6]: "sample_bit6"
   uio[7]: "sample_bit7"
 
-# Do not change!
 yaml_version: 6
-```
-
