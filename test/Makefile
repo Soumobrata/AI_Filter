@@ -7,6 +7,9 @@ TOPLEVEL_LANG ?= verilog
 
 SRC_DIR = $(PWD)/../src
 
+# Copy memory files into test directory so $readmemh("w1.memh") can find them
+$(shell cp $(SRC_DIR)/*.memh . 2>/dev/null || true)
+
 PROJECT_SOURCES = project.v ai_filter.v
 
 ifneq ($(GATES),yes)
