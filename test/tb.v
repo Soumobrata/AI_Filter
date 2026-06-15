@@ -1,4 +1,3 @@
-```verilog
 `default_nettype none
 `timescale 1ns / 1ps
 
@@ -34,5 +33,3 @@ module tb ();
 endmodule
 
 `default_nettype wire
-```
-
